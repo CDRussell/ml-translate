@@ -32,7 +32,11 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
+@OptIn(ExperimentalTime::class)
 class WebActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWebBinding
@@ -111,7 +115,13 @@ class WebActivity : AppCompatActivity() {
                             val selected = items[which]
                             logcat { "Selected $which: $selected" }
                             lifecycleScope.launch {
-                                translateWebViewContent(selected)
+                                measureTime {
+                                    translateWebViewContent(selected)
+                                }.also { duration ->
+                                    logcat {"Took $duration total time to translate ${binding.webView.url}"}
+                                    Toast.makeText(this@WebActivity, "Translated in $duration", Toast.LENGTH_SHORT).show()
+                                }
+
                             }
                             dialog.dismiss()
                         }
@@ -132,11 +142,6 @@ class WebActivity : AppCompatActivity() {
 
     private fun configureTranslator() {
         binding.fab.setOnClickListener {
-            // logcat { "Translate ${binding.webView.url}" }
-            //
-            // lifecycleScope.launch {
-            //     translateWebViewContent(binding.webView, "es")
-            // }
             if (binding.urlInput.requestFocus()) {
                 val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.showSoftInput(binding.urlInput, InputMethodManager.SHOW_IMPLICIT)
@@ -146,31 +151,37 @@ class WebActivity : AppCompatActivity() {
 
     private suspend fun translateWebViewContent(targetLanguage: String) {
         val doc = parseHtml()
-        val paragraphs = doc.body().select("p")
 
-        val textNodes = doc.body().allElements
+        val sourceLanguage = measureTimedValue {
+            val paragraphs = doc.body().select("p")
+            detectSourceLanguage(paragraphs)
+        }.also { logcat {"Took ${it.duration} to detect source language"} }.value
 
-        val sourceLanguage = detectSourceLanguage(paragraphs)
         if (sourceLanguage == targetLanguage) {
             logcat { "Source and target languages are the same, nothing to do" }
             return
         }
 
-        val startTime = System.currentTimeMillis()
-        textNodes.textNodes().forEach { node ->
-            val original = node.text()
-            if (original.isNotBlank()) {
-                node.text(translate(original, sourceLanguage, targetLanguage))
+        val textNodes = doc.body().allElements.textNodes()
+        logcat { "Found ${textNodes.size} text nodes" }
+        measureTime {
+            textNodes.forEach { node ->
+                val original = node.text()
+                if (original.isNotBlank()) {
+                    node.text(translate(original, sourceLanguage, targetLanguage))
+                }
             }
-        }
-        val finalHtml = doc.html()
-        val endTime = System.currentTimeMillis()
-        logcat { "Took ${endTime - startTime}ms to translate" }
+        }.also { logcat {"Took $it to translate ${textNodes.size} nodes"} }
 
-        //logcat { "Final HTML: $finalHtml " }
+        val finalHtml = doc.html()
+
         binding.webView.loadDataWithBaseURL(binding.webView.url, finalHtml, "text/html", "utf-8", binding.webView.url)
 
-        Toast.makeText(this, "Translated from $sourceLanguage to $targetLanguage in ${endTime - startTime}ms", Toast.LENGTH_SHORT).show()
+
+
+
+
+
 
         // binding.webView.evaluateJavascript(
         //     """
@@ -236,12 +247,8 @@ class WebActivity : AppCompatActivity() {
     }
 
     private suspend fun parseHtml(): Document {
-        logcat { "Extracting HTML" }
         val html = extractHtml()
-        logcat { "Got HTML" }
-        val doc = Jsoup.parse(html, "UTF-8")
-        logcat { "Parsed HTML" }
-        return doc
+        return Jsoup.parse(html, "UTF-8")
     }
 
     private suspend fun translate(sourceHtml: String, sourceLanguage: String, targetLanguage: String): String {

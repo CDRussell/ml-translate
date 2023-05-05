@@ -16,7 +16,6 @@
         app:layout_constraintBottom_toTopOf="@id/existingLanguageRecyclerView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#4F00"
         android:id="@+id/existingLanguageRecyclerView"
         />
 
