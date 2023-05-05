@@ -85,6 +85,10 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         } else {
             _validLanguagesSelectedState.update { ValidLanguagesSelected(false) }
         }
+
+        if(supportedLanguages.contains(outputLanguage)) {
+            app.preferences().setPreferredOutputLanguage(outputLanguage)
+        }
     }
 
     fun refresh() {

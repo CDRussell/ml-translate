@@ -4,14 +4,18 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/ic_baseline_delete_forever_24.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_baseline_menu_24.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_outline_language_24.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_manage_language.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_web.xml" value="0.1" />
         <entry key="app/src/main/res/layout/content_manage_language.xml" value="0.1" />
         <entry key="app/src/main/res/layout/content_web.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/dialog_choose_language.xml" value="0.1" />
         <entry key="app/src/main/res/layout/existing_language_row_item.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_first.xml" value="0.1" />
         <entry key="app/src/main/res/layout/language_selection_item.xml" value="0.1" />
+        <entry key="app/src/main/res/menu/bottom_app_bar.xml" value="0.1" />
       </map>
     </option>
   </component>

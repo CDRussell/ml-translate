@@ -13,7 +13,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 interface TextTranslator {
-    suspend fun translate(source: String, inputLanguage: String, outputLanguage:String): Result<String>
+    suspend fun translate(source: String, inputLanguage: String, outputLanguage: String): Result<String>
     suspend fun getAvailableLanguages(): List<TranslateRemoteModel>
     suspend fun deleteLanguageModel(languageCode: String)
     suspend fun downloadLanguage(languageCode: String): Boolean
@@ -21,28 +21,35 @@ interface TextTranslator {
 
 class MachineLearningTranslator : TextTranslator {
 
-    private var translator: Translator? = null
+    private val translationClients = mutableMapOf<String, Translator>()
 
-    override suspend fun translate(source: String, inputLanguage: String, outputLanguage:String): Result<String> {
+    override suspend fun translate(source: String, inputLanguage: String, outputLanguage: String): Result<String> {
+        val translator = getTranslator(inputLanguage, outputLanguage)
+        val modelAvailable = ensureModelAvailable(translator)
+
+        return if (modelAvailable) {
+            val result = translate(source, translator)
+            if (result.isSuccess) {
+                Result.success(result.getOrElse { "" })
+            } else {
+                Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
+            }
+        } else {
+            return Result.failure(Exception("Model not available"))
+        }
+    }
+
+    private fun getTranslator(inputLanguage: String, outputLanguage: String): Translator {
+        val cacheKey = "${inputLanguage}/${outputLanguage}"
+        translationClients[cacheKey]?.let {
+            return it
+        }
+
         val options = TranslatorOptions.Builder()
             .setSourceLanguage(inputLanguage)
             .setTargetLanguage(outputLanguage)
             .build()
-        val translator = Translation.getClient(options)
-        val modelAvailable = ensureModelAvailable(translator)
-
-        translator.use { translator ->
-            return if (modelAvailable) {
-                val result = translate(source, translator)
-                if (result.isSuccess) {
-                    Result.success(result.getOrElse { "" })
-                } else {
-                    Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
-                }
-            } else {
-                return Result.failure(Exception("Model not available"))
-            }
-        }
+        return Translation.getClient(options).also { translationClients[cacheKey] = it }
     }
 
     override suspend fun getAvailableLanguages(): List<TranslateRemoteModel> = suspendCoroutine { continuation ->
@@ -60,8 +67,9 @@ class MachineLearningTranslator : TextTranslator {
         val modelManager = RemoteModelManager.getInstance()
         modelManager.deleteDownloadedModel(TranslateRemoteModel.Builder(languageCode).build())
             .addOnSuccessListener {
-                logcat { "Deleted model for $languageCode"}
-                continuation.resume(Unit) }
+                logcat { "Deleted model for $languageCode" }
+                continuation.resume(Unit)
+            }
             .addOnFailureListener {
                 logcat { it.asLog() }
                 continuation.resume(Unit)
@@ -72,7 +80,7 @@ class MachineLearningTranslator : TextTranslator {
         val modelManager = RemoteModelManager.getInstance()
         modelManager.download(TranslateRemoteModel.Builder(languageCode).build(), DownloadConditions.Builder().build())
             .addOnSuccessListener {
-                logcat { "Downloaded model for $languageCode"}
+                logcat { "Downloaded model for $languageCode" }
                 continuation.resume(true)
             }
             .addOnFailureListener {

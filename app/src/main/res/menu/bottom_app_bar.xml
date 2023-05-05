@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/translate"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_outline_language_24"
+        android:title="Translate"/>
+
+    <item
+        android:id="@+id/refresh"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_baseline_refresh_24"
+        android:title="Refresh"/>
+
+    <item
+        android:id="@+id/backNav"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_baseline_arrow_back_24"
+        android:title="Back"/>
+
+    <item
+        android:id="@+id/forwardNav"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_baseline_arrow_forward_24"
+        android:title="Forward"/>
+
+</menu>
