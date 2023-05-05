@@ -3,7 +3,10 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="com.cdrussell.mltranslate">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
+        android:name=".MLTranslateApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -13,6 +16,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MLTranslate"
         tools:targetApi="31">
+        <activity
+            android:name=".webview.WebActivity"
+            android:exported="false"
+            android:label="@string/title_activity_web"
+            android:theme="@style/Theme.MLTranslate.NoActionBar"/>
+        <activity
+            android:name=".manage.ManageLanguageActivity"
+            android:exported="false"
+            android:label="@string/title_activity_manage_language"
+            android:theme="@style/Theme.MLTranslate"/>
         <activity
             android:name=".MainActivity"
             android:exported="true">
